@@ -17,7 +17,7 @@ from firebase_admin import credentials, messaging
 
 app = Flask(__name__)
 CORS(app)
-cred = credentials.Certificate('C:/Users/Savio Sunny/Downloads/project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f448.json')
+cred = credentials.Certificate('project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f448.json')
 firebase_admin.initialize_app(cred)
 
 
