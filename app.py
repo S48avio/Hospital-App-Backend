@@ -17,7 +17,7 @@ from firebase_admin import credentials, messaging
 
 app = Flask(__name__)
 CORS(app)
-cred = credentials.Certificate('project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f448.json')
+cred = credentials.Certificate('C:/Users/Savio Sunny/Downloads/project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f448.json')
 firebase_admin.initialize_app(cred)
 
 
@@ -126,6 +126,7 @@ def predict_consultation_time(descriptions):
 def check_appointments():
     data = request.get_json()
     Patient_ID = data['Patient_ID']
+    Token = data.get('Token')  # Token number for which waiting time is requested
 
     appointment = appointments_collection.find_one({'Patient_ID': Patient_ID})
 
@@ -140,24 +141,28 @@ def check_appointments():
         min_token = appointments_collection.find_one(sort=[("Token", 1)])["Token"]
 
         if Token is not None:
+            # Fetch earlier appointments' descriptions
             earlier_appointments = appointments_collection.find({'Token': {'$lt': Token}})
             descriptions = [a['description'] for a in earlier_appointments]
 
-            if not descriptions:
-                # If no descriptions found, set arrival time to 9:00 AM
-                arrival_time = datetime.now().replace(hour=9, minute=0)
-            else:
+            # Predict consultation times for earlier appointments
+            if descriptions:
                 waiting_time = predict_consultation_time(descriptions)
-                current_time = datetime.now()
+            else:
+                # If no descriptions found, set waiting time to 0
+                waiting_time = 0
 
-                # If current time is after 4:00 PM, set arrival time to 9:00 AM of the next day
-                if current_time.hour >= 16:
-                    arrival_time = datetime.now().replace(hour=9, minute=0) + timedelta(days=1)
-                else:
-                    arrival_time = current_time
+            # Get current time
+            current_time = datetime.now()
 
-                # Add waiting time to arrival time
-                arrival_time += timedelta(minutes=round(waiting_time))
+            # If current time is after 4:00 PM, set arrival time to 9:00 AM of the next day
+            if current_time.hour >= 16:
+                arrival_time = datetime.now().replace(hour=9, minute=0) + timedelta(days=1)
+            else:
+                arrival_time = current_time
+
+            # Add waiting time to arrival time
+            arrival_time += timedelta(minutes=round(waiting_time))
 
             # Format arrival time to display only hours and minutes
             arrival_time_str = arrival_time.strftime('%I:%M %p')
@@ -170,13 +175,13 @@ def check_appointments():
                 'Patient_ID': Patient_ID,
                 'Token': Token,
                 'min_token': min_token,
+                'waiting_time': waiting_time,
                 'arrival_time': arrival_time_str
             })
         else:
             return jsonify({'status': 'error', 'message': 'Token not found in the appointment'}), 512
     else:
         return jsonify({'status': 'error', 'message': 'Appointment not found for the patient'}), 404
-
 
 
 # Register new user
@@ -385,5 +390,6 @@ def chatbot():
     generated_message = response.candidates[0].content.parts[0].text
 
     return jsonify({"message": generated_message}), 200
+
 
 
