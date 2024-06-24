@@ -136,7 +136,7 @@ def check_appointments():
         Patient_ID = appointment.get('Patient_ID', None)
         Token = appointment.get('Token', None)
 
-    if Name and Appointment_ID and Patient_ID and Token:
+    if  Appointment_ID and Patient_ID and Token:
         # Get the current smallest token value
         min_token = appointments_collection.find_one(sort=[("Token", 1)])["Token"]
 
@@ -148,6 +148,8 @@ def check_appointments():
             # Predict consultation times for earlier appointments
             if descriptions:
                 waiting_time = predict_consultation_time(descriptions)
+                print('waiting time is')
+                print(waiting_time)
             else:
                 # If no descriptions found, set waiting time to 0
                 waiting_time = 0
