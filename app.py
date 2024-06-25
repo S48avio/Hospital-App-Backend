@@ -157,15 +157,14 @@ def check_appointments():
             # Get current time
             current_time = datetime.now()
 
-            # If current time is after 4:00 PM, set arrival time to 9:00 AM of the next day
-            if current_time.hour >= 16:
-                arrival_time = datetime.now().replace(hour=9, minute=0) + timedelta(days=1)
-            else:
-                arrival_time = current_time
+          # Determine the arrival time based on the current time
+                if 9 <= current_time.hour < 16:
+                    arrival_time = current_time + timedelta(minutes=round(waiting_time))
+                else:
+                    arrival_time = current_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+                    arrival_time += timedelta(minutes=round(waiting_time))
 
-            # Add waiting time to arrival time
-            arrival_time += timedelta(minutes=round(waiting_time))
-
+            
             # Format arrival time to display only hours and minutes
             arrival_time_str = arrival_time.strftime('%I:%M %p')
 
