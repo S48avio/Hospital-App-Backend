@@ -14,12 +14,10 @@ from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials, messaging
 
-
 app = Flask(__name__)
 CORS(app)
 cred = credentials.Certificate('project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f448.json')
 firebase_admin.initialize_app(cred)
-
 
 # MongoDB client setup
 client = MongoClient('mongodb+srv://saviosunny48:2TJsNwpNwqJX2aG3@cluster0.0zmwv1l.mongodb.net/')
@@ -32,11 +30,8 @@ medicines_collection = db['Medicine']
 medical_records_collection = db['medical_records']
 symptom_collection = db['symptom']
 
-
-
 GOOGLE_API_KEY = 'AIzaSyDLdxqrm1DMDnEdnX9oljbtewsRe90x2QU'
 genai.configure(api_key=GOOGLE_API_KEY)
-
 model = genai.GenerativeModel('gemini-pro')
 
 rf_model = None
@@ -107,7 +102,6 @@ def send_notification():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-    
 # Predict consultation time
 def predict_consultation_time(descriptions):
     if rf_model is None or one_hot_encoder is None:
@@ -136,54 +130,52 @@ def check_appointments():
         Patient_ID = appointment.get('Patient_ID', None)
         Token = appointment.get('Token', None)
 
-    if  Appointment_ID and Patient_ID and Token:
-        # Get the current smallest token value
-        min_token = appointments_collection.find_one(sort=[("Token", 1)])["Token"]
+        if Appointment_ID and Patient_ID and Token:
+            # Get the current smallest token value
+            min_token = appointments_collection.find_one(sort=[("Token", 1)])["Token"]
 
-        if Token is not None:
-            # Fetch earlier appointments' descriptions
-            earlier_appointments = appointments_collection.find({'Token': {'$lt': Token}})
-            descriptions = [a['description'] for a in earlier_appointments]
+            if Token is not None:
+                # Fetch earlier appointments' descriptions
+                earlier_appointments = appointments_collection.find({'Token': {'$lt': Token}})
+                descriptions = [a['description'] for a in earlier_appointments]
 
-            # Predict consultation times for earlier appointments
-            if descriptions:
-                waiting_time = predict_consultation_time(descriptions)
-                print('waiting time is')
-                print(waiting_time)
-            else:
-                # If no descriptions found, set waiting time to 0
-                waiting_time = 0
+                # Predict consultation times for earlier appointments
+                if descriptions:
+                    waiting_time = predict_consultation_time(descriptions)
+                    print('waiting time is')
+                    print(waiting_time)
+                else:
+                    # If no descriptions found, set waiting time to 0
+                    waiting_time = 0
 
-            # Get current time
-            current_time = datetime.now()
+                # Get current time
+                current_time = datetime.now()
 
-          # Determine the arrival time based on the current time
+                # Determine the arrival time based on the current time
                 if 9 <= current_time.hour < 16:
                     arrival_time = current_time + timedelta(minutes=round(waiting_time))
                 else:
-                    arrival_time = current_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+                    arrival_time = (datetime.now() + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
                     arrival_time += timedelta(minutes=round(waiting_time))
 
-            
-            # Format arrival time to display only hours and minutes
-            arrival_time_str = arrival_time.strftime('%I:%M %p')
+                # Format arrival time to display only hours and minutes
+                arrival_time_str = arrival_time.strftime('%I:%M %p')
 
-            return jsonify({
-                'status': 'success',
-                'message': 'Appointment Found',
-                'Name': Name,
-                'Appointment_ID': Appointment_ID,
-                'Patient_ID': Patient_ID,
-                'Token': Token,
-                'min_token': min_token,
-                'waiting_time': waiting_time,
-                'arrival_time': arrival_time_str
-            })
-        else:
-            return jsonify({'status': 'error', 'message': 'Token not found in the appointment'}), 512
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Appointment Found',
+                    'Name': Name,
+                    'Appointment_ID': Appointment_ID,
+                    'Patient_ID': Patient_ID,
+                    'Token': Token,
+                    'min_token': min_token,
+                    'waiting_time': waiting_time,
+                    'arrival_time': arrival_time_str
+                })
+            else:
+                return jsonify({'status': 'error', 'message': 'Token not found in the appointment'}), 512
     else:
         return jsonify({'status': 'error', 'message': 'Appointment not found for the patient'}), 404
-
 
 # Register new user
 @app.route('/register', methods=['POST'])
@@ -391,6 +383,5 @@ def chatbot():
     generated_message = response.candidates[0].content.parts[0].text
 
     return jsonify({"message": generated_message}), 200
-
 
 
