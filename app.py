@@ -20,7 +20,7 @@ cred = credentials.Certificate('project-1-bca0f-firebase-adminsdk-fxjcp-de0d57f4
 firebase_admin.initialize_app(cred)
 
 # MongoDB client setup
-client = MongoClient('mongodb+srv://saviosunny48:2TJsNwpNwqJX2aG3@cluster0.0zmwv1l.mongodb.net/')
+client = MongoClient('mongodb+srv://ter0.0zmwv1l.mongodb.net/')
 db = client['test']
 users_collection = db['App_users']
 prescriptions_collection = db['prescriptions']
@@ -30,7 +30,7 @@ medicines_collection = db['Medicine']
 medical_records_collection = db['medical_records']
 symptom_collection = db['symptom']
 
-GOOGLE_API_KEY = 'AIzaSyDLdxqrm1DMDnEdnX9oljbtewsRe90x2QU'
+GOOGLE_API_KEY = 'AIzaSyDLdxqsRe90x2QU'
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
